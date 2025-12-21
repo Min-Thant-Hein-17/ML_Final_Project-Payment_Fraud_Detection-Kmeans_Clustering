@@ -13,12 +13,13 @@ st.set_page_config(
     layout="wide"
 )
 
-# --- 2. Sidebar for Info (Car Industry style) ---
+# --- 2. Sidebar for Info ---
 st.sidebar.title("🛡️ Fraud Sentinel")
 logo_url = "https://talloiresnetwork.tufts.edu/wp-content/uploads//Parami-University-1.png"
 
 if logo_url:
-    st.sidebar.image(logo_url, use_column_width=True)
+    # Fixed deprecated parameter based on your screenshot warning
+    st.sidebar.image(logo_url, use_container_width=True) 
 else:
     st.sidebar.subheader("Parami University")
 
@@ -33,7 +34,7 @@ st.sidebar.markdown("---")
 @st.cache_resource
 def load_model(model_path: str):
     if not os.path.exists(model_path):
-        st.error("Model file not found. Ensure 'fraud_detection_model.pkl' is in the folder.")
+        st.error(f"Model file not found. Ensure '{model_path}' is in the folder.")
         st.stop()
     with open(model_path, "rb") as f:
         return pickle.load(f)
@@ -44,52 +45,77 @@ model = load_model("fraud_detection_model.pkl")
 col_left, col_center, col_right = st.columns([1, 3, 1])
 with col_center:
     st.title("🛡️ Luxury Cosmetics Fraud Detection")
-    st.write("Upload transaction data to group customers and identify suspicious behavior clusters.")
+    st.write("Enter transaction details below to identify which behavioral segment the activity belongs to.")
 
 st.markdown("---")
 
-# File Uploader
-uploaded_file = st.file_uploader("📂 Upload Transaction CSV File", type="csv")
+# --- 5. Manual Input Form (Replacing File Uploader) ---
+st.subheader("Transaction Details")
 
-if uploaded_file is not None:
-    input_data = pd.read_csv(uploaded_file)
-    
-    # Simple Progress Bar
-    with st.spinner('Analyzing patterns...'):
-        # Step 1: Pre-process (Drop same columns as training)
-        cols_to_drop = ['Transaction_ID', 'Customer_ID', 'Fraud_Flag', 'IP_Address', 'Transaction_Date', 'Transaction_Time']
-        input_cleaned = input_data.drop(columns=[c for c in cols_to_drop if c in input_data.columns])
-        
-        # Step 2: Prediction
-        # The pipeline handles KNN Imputation and Scaling automatically!
-        predictions = model.predict(input_cleaned)
-        input_data['Cluster'] = predictions
+# Define columns for input fields
+col1, col2, col3 = st.columns(3)
+col4, col5, col6 = st.columns(3)
 
-    # --- 5. Display Results in Columns ---
-    st.success("✅ Analysis Complete!")
-    
-    tab1, tab2 = st.tabs(["📄 Data View", "📊 Cluster Visualization"])
-    
-    with tab1:
-        st.subheader("Transaction List with Assigned Clusters")
-        st.dataframe(input_data, use_container_width=True)
-        
-    with tab2:
-        st.subheader("Cluster Separation (PCA Map)")
-        # Required for 'Mastery' in Visualization (3 pts)
-        X_preprocessed = model.named_steps['preprocess'].transform(input_cleaned)
-        pca = PCA(n_components=2)
-        X_pca = pca.fit_transform(X_preprocessed)
-        
-        pca_df = pd.DataFrame(X_pca, columns=['PC1', 'PC2'])
-        pca_df['Cluster'] = predictions
-        
-        fig, ax = plt.subplots()
-        sns.scatterplot(data=pca_df, x='PC1', y='PC2', hue='Cluster', palette='viridis', ax=ax)
-        plt.title("2D Visual of Hidden Patterns")
-        st.pyplot(fig)
-        
-        st.info("Clusters with very high Purchase Amounts or unusual profiles often represent fraud risk.")
+with col1:
+    purchase_amount = st.number_input("Purchase Amount ($)", min_value=0.0, value=500.0, step=10.0)
+with col2:
+    customer_age = st.number_input("Customer Age", min_value=18, max_value=100, value=30)
+with col3:
+    footfall_count = st.number_input("Store Footfall Count", min_value=0, value=50)
 
-else:
-    st.info("Please upload a CSV file to begin the clustering analysis.")
+with col4:
+    loyalty_tier = st.selectbox("Loyalty Tier", options=['Gold', 'Silver', 'Bronze', 'None'])
+with col5:
+    payment_method = st.selectbox("Payment Method", options=['Credit Card', 'PayPal', 'Cash', 'Crypto'])
+with col6:
+    product_cat = st.selectbox("Product Category", options=['Skincare', 'Fragrance', 'Makeup', 'Sets'])
+
+# Time and Day Engineering (matching your previous feature engineering)
+col7, col8 = st.columns(2)
+with col7:
+    trans_hour = st.slider("Transaction Hour (0-23)", 0, 23, 14)
+with col8:
+    day_of_week = st.selectbox("Day of Week", options=[0, 1, 2, 3, 4, 5, 6], 
+                               format_func=lambda x: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'][x])
+
+# --- 6. Prediction Logic ---
+st.write("")
+predict_btn = st.button("✨ Identify Transaction Cluster", type="primary")
+
+if predict_btn:
+    try:
+        # Create a dictionary of features that matches your training exactly
+        # Ensure 'Time_Continuous' matches the engineering you did in the notebook
+        input_dict = {
+            'Purchase_Amount': [float(purchase_amount)],
+            'Customer_Age': [float(customer_age)],
+            'Footfall_Count': [float(footfall_count)],
+            'Customer_Loyalty_Tier': [loyalty_tier],
+            'Payment_Method': [payment_method],
+            'Product_Category': [product_cat],
+            'Time_Continuous': [float(trans_hour)], 
+            'Day_of_Week': [day_of_week]
+        }
+        
+        input_df = pd.DataFrame(input_dict)
+
+        # Step 2: Prediction via Pipeline
+        cluster = model.predict(input_df)[0]
+
+        # Display Result
+        st.success(f"✅ Analysis Complete! This transaction belongs to **Cluster {cluster}**")
+        
+        # Mastery Point: Practical Interpretation Guide
+        st.markdown("---")
+        st.subheader("Cluster Interpretation Guide")
+        interpretations = {
+            0: "Standard High-Value Purchase",
+            1: "Potential Anomaly (High Frequency/Low Value)",
+            2: "Typical Retail Customer",
+            3: "New Account / Rare Transaction Pattern",
+            4: "Verified VIP Segment"
+        }
+        st.info(f"**Cluster {cluster} Insight:** {interpretations.get(cluster, 'Unclassified Segment')}")
+
+    except Exception as e:
+        st.error(f"Error processing inputs: {e}")
