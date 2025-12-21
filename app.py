@@ -41,37 +41,46 @@ with col3:
 hour = st.slider("Transaction Hour", 0, 23, 14)
 day = st.selectbox("Day of Week", [0, 1, 2, 3, 4, 5, 6], format_func=lambda x: ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"][x])
 
-# --- 4. Prediction Logic (The 'Back-End') ---
+# --- 4. Prediction Logic ---
 if st.button("✨ Identify Transaction Cluster", type="primary"):
-    # Step 1: Wrap inputs into a DataFrame (must match training columns exactly!)
+    # Step 1: Wrap inputs into a DataFrame
+    # IMPORTANT: 'Day_of_Week' must be an integer/float because it was 
+    # included in 'numerical_features' during your model training.
     input_df = pd.DataFrame({
         'Purchase_Amount': [float(amt)],
         'Customer_Age': [float(age)],
         'Footfall_Count': [float(foot)],
         'Time_Continuous': [float(hour)],
-        'Day_of_Week': [day],
+        'Day_of_Week': [int(day)], # Ensure this is an integer
         'Customer_Loyalty_Tier': [loyalty],
         'Payment_Method': [pay],
         'Product_Category': [cat]
     })
 
     # Step 2: Re-order to match training EXACTLY
-    # All these lines MUST be indented 1 tab (4 spaces) inside the 'if' block
+    # The order MUST be: Numerical columns first, then Categorical columns
+    # because that is how your ColumnTransformer was built.
     final_features = [
-        'Purchase_Amount', 'Customer_Age', 'Footfall_Count', 'Time_Continuous', 
-        'Day_of_Week', 'Customer_Loyalty_Tier', 'Payment_Method', 'Product_Category'
+        'Purchase_Amount', 'Customer_Age', 'Footfall_Count', 
+        'Time_Continuous', 'Day_of_Week', 
+        'Customer_Loyalty_Tier', 'Payment_Method', 'Product_Category'
     ]
+    
     input_df = input_df[final_features]
 
     # Step 3: Use the model to predict
-    result = model.predict(input_df)[0]
-
-    # Step 4: Show the output clearly
-    st.markdown("---")
-    st.success(f"### ✅ Transaction Identified: Cluster {result}")
-    
-    # Practical Usefulness: Explain what the cluster means
-    if result == 0:
-        st.info("💡 **Insight:** This represents a standard high-value customer.")
-    else:
-        st.warning("⚠️ **Insight:** This behavior matches patterns often flagged for review.")
+    try:
+        result = model.predict(input_df)[0]
+        
+        # Step 4: Show the output
+        st.markdown("---")
+        st.success(f"### ✅ Transaction Identified: Cluster {result}")
+        
+        if result == 0:
+            st.info("💡 **Insight:** This represents a standard high-value customer.")
+        else:
+            st.warning("⚠️ **Insight:** This behavior matches patterns often flagged for review.")
+            
+    except Exception as e:
+        st.error(f"Prediction Error: {e}")
+        st.write("Expected columns by model:", model.feature_names_in_)
