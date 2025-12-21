@@ -1,104 +1,81 @@
-#using feature engineering stage!
-import streamlit as st 
-import pickle
-import os
-import pandas as pd
-import numpy as np
 
-#Importing Libraries
+# train_model.py
 import pandas as pd
 import numpy as np
-import matplotlib.pyplot as plt
-import seaborn as sns
-from sklearn.model_selection import train_test_split
+import pickle
+
 from sklearn.impute import SimpleImputer
-from sklearn.preprocessing import StandardScaler
-from sklearn.preprocessing import OneHotEncoder
-from sklearn.impute import KNNImputer
+from sklearn.preprocessing import StandardScaler, OneHotEncoder
 from sklearn.compose import ColumnTransformer
 from sklearn.pipeline import Pipeline
 from sklearn.cluster import KMeans
-from sklearn.metrics.pairwise import euclidean_distances
-from sklearn.metrics.pairwise import silhouette_score
 
-
-# 1. Load and Clean (Drop identifiers so select_dtypes works correctly)
-# 1. Load and Clean
+# --- 1) Load dataset ---
 fd = pd.read_csv("dataset/luxury_cosmetics_fraud_analysis_2025.csv")
 
-# 2. FEATURE ENGINEERING (Must match your app.py!)
-# Convert Time string to a simple number
+# --- 2) Feature engineering ---
+# Time -> continuous hour (H + M/60)
 time_objs = pd.to_datetime(fd['Transaction_Time'], format='%H:%M:%S')
-fd['Time_Continuous'] = time_objs.dt.hour + time_objs.dt.minute/60
+fd['Time_Continuous'] = time_objs.dt.hour + time_objs.dt.minute / 60.0
 
-# Convert Date to Day of Week
+# Date -> day-of-week (Mon=0..Sun=6)
 fd['Day_of_Week'] = pd.to_datetime(fd['Transaction_Date']).dt.dayofweek
 
-# 3. DROP the messy columns BEFORE select_dtypes
-cols_to_drop = ['Transaction_ID', 'Customer_ID', 'Fraud_Flag', 'IP_Address', 'Transaction_Date', 'Transaction_Time']
+# --- 3) Drop identifiers / label columns (don’t use labels for clustering) ---
+cols_to_drop = [
+    'Transaction_ID','Customer_ID','Fraud_Flag','IP_Address',
+    'Transaction_Date','Transaction_Time'
+]
 fd_cleaned = fd.drop(columns=[c for c in cols_to_drop if c in fd.columns])
 
-# 4. NOW define your features
-numerical_features = fd_cleaned.select_dtypes(include=['int64', 'float64']).columns.tolist()
-categorical_features = fd_cleaned.select_dtypes(include=['object']).columns.tolist()
+# --- 4) Define the ONLY features we will train on (freeze schema) ---
+EXPECTED_FEATURES = [
+    'Purchase_Amount', 'Customer_Age', 'Footfall_Count',
+    'Time_Continuous', 'Day_of_Week',
+    'Customer_Loyalty_Tier', 'Payment_Method', 'Product_Category'
+]
 
-# ... (The rest of your Pipeline and Pickle code remains the same) ...
-# 3. Pipelines & ColumnTransformer (Your logic is good here)
+# Ensure all expected columns exist – if any are missing, create nulls (imputer will handle)
+for col in EXPECTED_FEATURES:
+    if col not in fd_cleaned.columns:
+        fd_cleaned[col] = np.nan
 
-# ... (Previous Date/Time Engineering code) ...
+# --- 5) Preprocessors ---
+num_cols = ['Purchase_Amount','Customer_Age','Footfall_Count','Time_Continuous','Day_of_Week']
+cat_cols = ['Customer_Loyalty_Tier','Payment_Method','Product_Category']
 
-# 4. EXPLICITLY DEFINE FEATURES (Mastery: Ensures schema consistency)
-# Use the exact same list here that you use in app.py
-numerical_features = ['Purchase_Amount', 'Customer_Age', 'Footfall_Count', 'Time_Continuous', 'Day_of_Week']
-categorical_features = ['Customer_Loyalty_Tier', 'Payment_Method', 'Product_Category']
-
-# 5. Build and Fit Model
-preprocessor_instance = ColumnTransformer(transformers=[
-    ('num', num_transformer, numerical_features),
-    ('cat', cat_transformer, categorical_features)
+num_transformer = Pipeline(steps=[
+    ('imputer', SimpleImputer(strategy='median')),
+    ('scaler', StandardScaler())
 ])
 
+cat_transformer = Pipeline(steps=[
+    ('imputer', SimpleImputer(strategy='most_frequent')),
+    # IMPORTANT: ignore unseen categories at inference
+    ('onehot', OneHotEncoder(handle_unknown='ignore', sparse_output=False))
+])
+
+preprocessor = ColumnTransformer(transformers=[
+    ('num', num_transformer, num_cols),
+    ('cat', cat_transformer, cat_cols)
+], remainder='drop')
+
+# --- 6) Model pipeline ---
+kmeans = KMeans(n_clusters=5, random_state=42, n_init='auto')
 model = Pipeline(steps=[
-    ('preprocess', preprocessor_instance),
-    ('cluster_model', KMeans(n_clusters=5, random_state=42, n_init='auto'))
+    ('preprocess', preprocessor),
+    ('cluster_model', kmeans)
 ])
 
-# Fit only on the selected features
-model.fit(fd_cleaned[numerical_features + categorical_features])
+# Fit
+model.fit(fd_cleaned[EXPECTED_FEATURES])
 
-# Save model
+# --- 7) Save model together with the expected schema ---
+artifact = {
+    'model': model,
+    'expected_features': EXPECTED_FEATURES
+}
 with open('fraud_detection_model.pkl', 'wb') as f:
-    pickle.dump(model, f)
-    
-# --- STREAMLIT SECTION ---
-st.title("Fraud Detection in Luxury Cosmetics")
+    pickle.dump(artifact, f)
 
-# Load the full pipeline
-with open('fraud_detection_model.pkl', 'rb') as f:
-    loaded_model = pickle.load(f)
-
-uploaded_file = st.file_uploader("Choose a CSV file", type="csv")
-
-if uploaded_file is not None:
-    input_data = pd.read_csv(uploaded_file)
-    
-    # We must drop the same columns from the input data to avoid errors
-    input_cleaned = input_data.drop(columns=[c for c in cols_to_drop if c in input_data.columns])
-    
-    # Since we saved the whole pipeline, we just call predict() on the raw data!
-    # The pipeline handles the preprocessing automatically.
-    predictions = loaded_model.predict(input_cleaned)
-    
-    input_data['Cluster'] = predictions
-    st.write("Predictions (Cluster 0-4):")
-    st.dataframe(input_data)
-
-
-# 1. Ensure 'model' is the name of your final Pipeline variable
-# 2. Open a new file in 'write-binary' (wb) mode
-with open('fraud_detection_model.pkl', 'wb') as file:
-    pickle.dump(model, file)
-
-
-print("✅ Pickle file 'fraud_detection_model.pkl' has been created successfully!")
-
+print("✅ Trained and saved fraud_detection_model.pkl with expected schema.")
