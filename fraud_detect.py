@@ -23,15 +23,26 @@ from sklearn.metrics.pairwise import silhouette_score
 
 
 # 1. Load and Clean (Drop identifiers so select_dtypes works correctly)
+# 1. Load and Clean
 fd = pd.read_csv("dataset/luxury_cosmetics_fraud_analysis_2025.csv")
-# Drop identifiers and target before defining features
-cols_to_drop = ['Transaction_ID', 'Customer_ID', 'Fraud_Flag', 'IP_Address']
+
+# 2. FEATURE ENGINEERING (Must match your app.py!)
+# Convert Time string to a simple number
+time_objs = pd.to_datetime(fd['Transaction_Time'], format='%H:%M:%S')
+fd['Time_Continuous'] = time_objs.dt.hour + time_objs.dt.minute/60
+
+# Convert Date to Day of Week
+fd['Day_of_Week'] = pd.to_datetime(fd['Transaction_Date']).dt.dayofweek
+
+# 3. DROP the messy columns BEFORE select_dtypes
+cols_to_drop = ['Transaction_ID', 'Customer_ID', 'Fraud_Flag', 'IP_Address', 'Transaction_Date', 'Transaction_Time']
 fd_cleaned = fd.drop(columns=[c for c in cols_to_drop if c in fd.columns])
 
-# 2. Define Features based on the CLEANED data
+# 4. NOW define your features
 numerical_features = fd_cleaned.select_dtypes(include=['int64', 'float64']).columns.tolist()
 categorical_features = fd_cleaned.select_dtypes(include=['object']).columns.tolist()
 
+# ... (The rest of your Pipeline and Pickle code remains the same) ...
 # 3. Pipelines & ColumnTransformer (Your logic is good here)
 cat_transformer = Pipeline(steps=[
     ('imputer', SimpleImputer(strategy='most_frequent')),
@@ -89,5 +100,6 @@ if uploaded_file is not None:
 # 2. Open a new file in 'write-binary' (wb) mode
 with open('fraud_detection_model.pkl', 'wb') as file:
     pickle.dump(model, file)
+
 
 print("✅ Pickle file 'fraud_detection_model.pkl' has been created successfully!")
