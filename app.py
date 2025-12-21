@@ -1,72 +1,73 @@
-import pandas as pd
-import numpy as np
+#fraud_detect2.py
+
+
+# app.py
 import pickle
-from flask import Flask, request, jsonify
+import pandas as pd
+import streamlit as st
 
-app = Flask(__name__)
+st.set_page_config(page_title="Fraud Detector", layout="wide")
 
-# --- 1) Load the trained artifact ---
-try:
-    with open('fraud_detection_model.pkl', 'rb') as f:
-        artifact = pickle.load(f)
-    
-    model = artifact['model']
-    EXPECTED_FEATURES = artifact['expected_features']
-    print("✅ Model and schema loaded successfully.")
-except FileNotFoundError:
-    print("❌ Error: fraud_detection_model.pkl not found. Please run your training script first.")
-    exit()
+st.sidebar.title("🛡️ Fraud Sentinel")
+st.sidebar.image(
+    "https://talloiresnetwork.tufts.edu/wp-content/uploads//Parami-University-1.png",
+    use_container_width=True
+)
+st.sidebar.markdown("---")
+st.sidebar.subheader("Owner's Information")
+st.sidebar.write("**Name:** Min Thant Hein")
+st.sidebar.write("**ID:** PIUS20230001")
 
-# --- 2) Helper function for feature engineering ---
-def preprocess_input(data):
-    """Transforms raw JSON input to match the training feature engineering."""
-    df = pd.DataFrame([data])
-    
-    # Process Time (HH:MM:SS) to Continuous Hour
-    if 'Transaction_Time' in df.columns:
-        time_objs = pd.to_datetime(df['Transaction_Time'], format='%H:%M:%S')
-        df['Time_Continuous'] = time_objs.dt.hour + time_objs.dt.minute / 60.0
-    
-    # Process Date to Day of Week (0-6)
-    if 'Transaction_Date' in df.columns:
-        df['Day_of_Week'] = pd.to_datetime(df['Transaction_Date']).dt.dayofweek
-    
-    # Ensure all columns exist, even if missing in JSON (imputer will handle NaNs)
-    for col in EXPECTED_FEATURES:
-        if col not in df.columns:
-            df[col] = np.nan
-            
-    return df[EXPECTED_FEATURES]
+@st.cache_resource
+def load_model_artifact():
+    with open("fraud_detection_model.pkl", "rb") as f:
+        return pickle.load(f)
 
-# --- 3) Routes ---
-@app.route('/predict', methods=['POST'])
-def predict():
+artifact = load_model_artifact()
+model = artifact['model']
+EXPECTED_FEATURES = artifact['expected_features']
+
+st.title("🛡️ Luxury Cosmetics Fraud Detection (Unsupervised K-Means)")
+st.write("Enter transaction details to identify the behavioral cluster.\n"
+         "Note: Clustering is unsupervised; labels are not used in training.")
+
+# UI
+col1, col2, col3 = st.columns(3)
+with col1:
+    amt = st.number_input("Purchase Amount ($)", value=500.0, step=10.0)
+    loyalty = st.selectbox("Loyalty Tier", ["Gold", "Silver", "Bronze", "None"])
+with col2:
+    age = st.number_input("Customer Age", value=30, step=1)
+    pay = st.selectbox("Payment Method", ["Credit Card", "PayPal", "Cash", "Crypto"])
+with col3:
+    foot = st.number_input("Store Footfall", value=50, step=1)
+    cat = st.selectbox("Product Category", ["Skincare", "Fragrance", "Makeup"])
+
+hour = st.slider("Transaction Hour", 0, 23, 14)
+day = st.selectbox("Day of Week", list(range(7)), format_func=lambda x: ["Mon","Tue","Wed","Thu","Fri","Sat","Sun"][x])
+
+if st.button("✨ Identify Transaction Cluster", type="primary"):
+    # Build input with the exact expected names
+    input_df = pd.DataFrame([{
+        'Purchase_Amount': float(amt),
+        'Customer_Age': float(age),
+        'Footfall_Count': float(foot),
+        'Time_Continuous': float(hour),
+        'Day_of_Week': int(day),
+        'Customer_Loyalty_Tier': loyalty,
+        'Payment_Method': pay,
+        'Product_Category': cat
+    }], columns=EXPECTED_FEATURES)
+
+    # Predict
     try:
-        # Get JSON data
-        input_json = request.get_json()
-        if not input_json:
-            return jsonify({"error": "No input data provided"}), 400
-
-        # Preprocess and Align with EXPECTED_FEATURES
-        processed_df = preprocess_input(input_json)
-
-        # Predict cluster
-        cluster_id = model.predict(processed_df)[0]
-
-        # Note: Since this is K-Means, we return the cluster. 
-        # You would map these cluster IDs to 'Fraud' or 'Legit' based on your analysis.
-        return jsonify({
-            "status": "success",
-            "cluster_assigned": int(cluster_id),
-            "message": f"Transaction assigned to cluster {cluster_id}"
-        })
-
+        result = int(model.predict(input_df)[0])
+        st.markdown("---")
+        st.success(f"### ✅ Transaction Identified: Cluster {result}")
+        if result == 0:
+            st.info("💡 **Insight:** Typical high-value customer segment.")
+        else:
+            st.warning("⚠️ **Insight:** Behavior aligns with a segment often flagged for review.")
     except Exception as e:
-        return jsonify({"error": str(e)}), 500
-
-@app.route('/health', methods=['GET'])
-def health():
-    return jsonify({"status": "Model API is running"})
-
-if __name__ == '__main__':
-    app.run(debug=True, port=5000)
+        st.error(f"Prediction failed: {e}")
+        st.caption("Tip: Clear cache in Streamlit Cloud (Manage app → Clear cache) after updating the model.")
