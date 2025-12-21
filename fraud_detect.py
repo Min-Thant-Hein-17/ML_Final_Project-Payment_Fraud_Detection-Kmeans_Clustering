@@ -44,34 +44,32 @@ categorical_features = fd_cleaned.select_dtypes(include=['object']).columns.toli
 
 # ... (The rest of your Pipeline and Pickle code remains the same) ...
 # 3. Pipelines & ColumnTransformer (Your logic is good here)
-cat_transformer = Pipeline(steps=[
-    ('imputer', SimpleImputer(strategy='most_frequent')),
-    ('onehot', OneHotEncoder(handle_unknown='ignore', sparse_output=False))
-])
 
-num_transformer = Pipeline(steps=[
-    ('imputer', KNNImputer(n_neighbors=5)), # Mastery: Complex Imputation
-    ('scaler', StandardScaler())           # Mastery: Scaling
-])
+# ... (Previous Date/Time Engineering code) ...
 
+# 4. EXPLICITLY DEFINE FEATURES (Mastery: Ensures schema consistency)
+# Use the exact same list here that you use in app.py
+numerical_features = ['Purchase_Amount', 'Customer_Age', 'Footfall_Count', 'Time_Continuous', 'Day_of_Week']
+categorical_features = ['Customer_Loyalty_Tier', 'Payment_Method', 'Product_Category']
+
+# 5. Build and Fit Model
 preprocessor_instance = ColumnTransformer(transformers=[
     ('num', num_transformer, numerical_features),
     ('cat', cat_transformer, categorical_features)
 ])
 
-# 4. The Final Model Pipeline (Expert Understanding)
 model = Pipeline(steps=[
     ('preprocess', preprocessor_instance),
     ('cluster_model', KMeans(n_clusters=5, random_state=42, n_init='auto'))
 ])
 
-# 5. Fit the WHOLE pipeline on the raw cleaned data
-model.fit(fd_cleaned)
+# Fit only on the selected features
+model.fit(fd_cleaned[numerical_features + categorical_features])
 
-# 6. Save the ENTIRE pipeline (Preprocess + KMeans)
+# Save model
 with open('fraud_detection_model.pkl', 'wb') as f:
     pickle.dump(model, f)
-
+    
 # --- STREAMLIT SECTION ---
 st.title("Fraud Detection in Luxury Cosmetics")
 
@@ -103,3 +101,4 @@ with open('fraud_detection_model.pkl', 'wb') as file:
 
 
 print("✅ Pickle file 'fraud_detection_model.pkl' has been created successfully!")
+
