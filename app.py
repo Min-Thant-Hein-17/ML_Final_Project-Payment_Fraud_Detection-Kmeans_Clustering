@@ -45,18 +45,25 @@ day = st.selectbox("Day of Week", [0, 1, 2, 3, 4, 5, 6], format_func=lambda x: [
 if st.button("✨ Identify Transaction Cluster", type="primary"):
     # Step 1: Wrap inputs into a DataFrame (must match training columns exactly!)
     input_df = pd.DataFrame({
-        'Purchase_Amount': [amt],
-        'Customer_Age': [age],
-        'Footfall_Count': [foot],
+        'Purchase_Amount': [float(amt)],
+        'Customer_Age': [float(age)],
+        'Footfall_Count': [float(foot)],
+        'Time_Continuous': [float(hour)],
+        'Day_of_Week': [day],
         'Customer_Loyalty_Tier': [loyalty],
         'Payment_Method': [pay],
-        'Product_Category': [cat],
-        'Time_Continuous': [float(hour)],
-        'Day_of_Week': [day]
+        'Product_Category': [cat]
     })
+
+    # Re-order to match training EXACTLY
+    final_features = ['Purchase_Amount', 'Customer_Age', 'Footfall_Count', 'Time_Continuous', 'Day_of_Week', 
+                      'Customer_Loyalty_Tier', 'Payment_Method', 'Product_Category']
+    input_df = input_df[final_features]
+
 
     # Step 2: Use the model to predict
     result = model.predict(input_df)[0]
+
 
     # Step 3: Show the output clearly
     st.markdown("---")
@@ -67,3 +74,4 @@ if st.button("✨ Identify Transaction Cluster", type="primary"):
         st.info("💡 **Insight:** This represents a standard high-value customer.")
     else:
         st.warning("⚠️ **Insight:** This behavior matches patterns often flagged for review.")
+
