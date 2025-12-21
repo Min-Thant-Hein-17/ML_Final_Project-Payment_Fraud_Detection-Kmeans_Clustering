@@ -55,17 +55,18 @@ if st.button("✨ Identify Transaction Cluster", type="primary"):
         'Product_Category': [cat]
     })
 
-    # Re-order to match training EXACTLY
-    final_features = ['Purchase_Amount', 'Customer_Age', 'Footfall_Count', 'Time_Continuous', 'Day_of_Week', 
-                      'Customer_Loyalty_Tier', 'Payment_Method', 'Product_Category']
+    # Step 2: Re-order to match training EXACTLY
+    # All these lines MUST be indented 1 tab (4 spaces) inside the 'if' block
+    final_features = [
+        'Purchase_Amount', 'Customer_Age', 'Footfall_Count', 'Time_Continuous', 
+        'Day_of_Week', 'Customer_Loyalty_Tier', 'Payment_Method', 'Product_Category'
+    ]
     input_df = input_df[final_features]
 
-
-    # Step 2: Use the model to predict
+    # Step 3: Use the model to predict
     result = model.predict(input_df)[0]
 
-
-    # Step 3: Show the output clearly
+    # Step 4: Show the output clearly
     st.markdown("---")
     st.success(f"### ✅ Transaction Identified: Cluster {result}")
     
@@ -74,4 +75,3 @@ if st.button("✨ Identify Transaction Cluster", type="primary"):
         st.info("💡 **Insight:** This represents a standard high-value customer.")
     else:
         st.warning("⚠️ **Insight:** This behavior matches patterns often flagged for review.")
-
