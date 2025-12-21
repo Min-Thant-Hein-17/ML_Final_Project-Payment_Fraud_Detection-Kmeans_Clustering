@@ -2,120 +2,68 @@ import os
 import pickle
 import pandas as pd
 import streamlit as st
-import matplotlib.pyplot as plt
-import seaborn as sns
-from sklearn.decomposition import PCA
 
-# --- 1. Configuration & Setup ---
-st.set_page_config(
-    page_title="Luxury Fraud Detector",
-    page_icon="🛡️",
-    layout="wide"
-)
+# --- 1. Basic Setup & Owner Info ---
+st.set_page_config(page_title="Fraud Detector", layout="wide")
 
-# --- 2. Sidebar for Info ---
 st.sidebar.title("🛡️ Fraud Sentinel")
-logo_url = "https://talloiresnetwork.tufts.edu/wp-content/uploads//Parami-University-1.png"
-
-if logo_url:
-    # Fixed deprecated parameter based on your screenshot warning
-    st.sidebar.image(logo_url, use_container_width=True) 
-else:
-    st.sidebar.subheader("Parami University")
-
+st.sidebar.image("https://talloiresnetwork.tufts.edu/wp-content/uploads//Parami-University-1.png", use_container_width=True)
 st.sidebar.markdown("---")
 st.sidebar.subheader("Owner's Information")
 st.sidebar.write("**Name:** Min Thant Hein")
-st.sidebar.write("**Student ID:** PIUS20230001")
-st.sidebar.write("**Contact Email:** minthanthein@parami.edu.mm")
-st.sidebar.markdown("---")
+st.sidebar.write("**ID:** PIUS20230001")
 
-# --- 3. Load Model Pipeline ---
+# --- 2. Load the Model (The 'Brain' of our App) ---
 @st.cache_resource
-def load_model(model_path: str):
-    if not os.path.exists(model_path):
-        st.error(f"Model file not found. Ensure '{model_path}' is in the folder.")
-        st.stop()
-    with open(model_path, "rb") as f:
+def load_model():
+    with open("fraud_detection_model.pkl", "rb") as f:
         return pickle.load(f)
 
-model = load_model("fraud_detection_model.pkl")
+model = load_model()
 
-# --- 4. Main Application Layout ---
-col_left, col_center, col_right = st.columns([1, 3, 1])
-with col_center:
-    st.title("🛡️ Luxury Cosmetics Fraud Detection")
-    st.write("Enter transaction details below to identify which behavioral segment the activity belongs to.")
+# --- 3. User Interface (The 'Front-End') ---
+st.title("🛡️ Luxury Cosmetics Fraud Detection")
+st.write("Enter details to identify the behavioral cluster.")
 
-st.markdown("---")
-
-# --- 5. Manual Input Form (Replacing File Uploader) ---
-st.subheader("Transaction Details")
-
-# Define columns for input fields
+# Create input fields in a clean grid
 col1, col2, col3 = st.columns(3)
-col4, col5, col6 = st.columns(3)
-
 with col1:
-    purchase_amount = st.number_input("Purchase Amount ($)", min_value=0.0, value=500.0, step=10.0)
+    amt = st.number_input("Purchase Amount ($)", value=500.0)
+    loyalty = st.selectbox("Loyalty Tier", ["Gold", "Silver", "Bronze", "None"])
 with col2:
-    customer_age = st.number_input("Customer Age", min_value=18, max_value=100, value=30)
+    age = st.number_input("Customer Age", value=30)
+    pay = st.selectbox("Payment Method", ["Credit Card", "PayPal", "Cash", "Crypto"])
 with col3:
-    footfall_count = st.number_input("Store Footfall Count", min_value=0, value=50)
+    foot = st.number_input("Store Footfall", value=50)
+    cat = st.selectbox("Product Category", ["Skincare", "Fragrance", "Makeup"])
 
-with col4:
-    loyalty_tier = st.selectbox("Loyalty Tier", options=['Gold', 'Silver', 'Bronze', 'None'])
-with col5:
-    payment_method = st.selectbox("Payment Method", options=['Credit Card', 'PayPal', 'Cash', 'Crypto'])
-with col6:
-    product_cat = st.selectbox("Product Category", options=['Skincare', 'Fragrance', 'Makeup', 'Sets'])
+# Time engineering sliders
+hour = st.slider("Transaction Hour", 0, 23, 14)
+day = st.selectbox("Day of Week", [0, 1, 2, 3, 4, 5, 6], format_func=lambda x: ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"][x])
 
-# Time and Day Engineering (matching your previous feature engineering)
-col7, col8 = st.columns(2)
-with col7:
-    trans_hour = st.slider("Transaction Hour (0-23)", 0, 23, 14)
-with col8:
-    day_of_week = st.selectbox("Day of Week", options=[0, 1, 2, 3, 4, 5, 6], 
-                               format_func=lambda x: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'][x])
+# --- 4. Prediction Logic (The 'Back-End') ---
+if st.button("✨ Identify Transaction Cluster", type="primary"):
+    # Step 1: Wrap inputs into a DataFrame (must match training columns exactly!)
+    input_df = pd.DataFrame({
+        'Purchase_Amount': [amt],
+        'Customer_Age': [age],
+        'Footfall_Count': [foot],
+        'Customer_Loyalty_Tier': [loyalty],
+        'Payment_Method': [pay],
+        'Product_Category': [cat],
+        'Time_Continuous': [float(hour)],
+        'Day_of_Week': [day]
+    })
 
-# --- 6. Prediction Logic ---
-st.write("")
-predict_btn = st.button("✨ Identify Transaction Cluster", type="primary")
+    # Step 2: Use the model to predict
+    result = model.predict(input_df)[0]
 
-if predict_btn:
-    try:
-        # Create a dictionary of features that matches your training exactly
-        # Ensure 'Time_Continuous' matches the engineering you did in the notebook
-        input_dict = {
-            'Purchase_Amount': [float(purchase_amount)],
-            'Customer_Age': [float(customer_age)],
-            'Footfall_Count': [float(footfall_count)],
-            'Customer_Loyalty_Tier': [loyalty_tier],
-            'Payment_Method': [payment_method],
-            'Product_Category': [product_cat],
-            'Time_Continuous': [float(trans_hour)], 
-            'Day_of_Week': [day_of_week]
-        }
-        
-        input_df = pd.DataFrame(input_dict)
-
-        # Step 2: Prediction via Pipeline
-        cluster = model.predict(input_df)[0]
-
-        # Display Result
-        st.success(f"✅ Analysis Complete! This transaction belongs to **Cluster {cluster}**")
-        
-        # Mastery Point: Practical Interpretation Guide
-        st.markdown("---")
-        st.subheader("Cluster Interpretation Guide")
-        interpretations = {
-            0: "Standard High-Value Purchase",
-            1: "Potential Anomaly (High Frequency/Low Value)",
-            2: "Typical Retail Customer",
-            3: "New Account / Rare Transaction Pattern",
-            4: "Verified VIP Segment"
-        }
-        st.info(f"**Cluster {cluster} Insight:** {interpretations.get(cluster, 'Unclassified Segment')}")
-
-    except Exception as e:
-        st.error(f"Error processing inputs: {e}")
+    # Step 3: Show the output clearly
+    st.markdown("---")
+    st.success(f"### ✅ Transaction Identified: Cluster {result}")
+    
+    # Practical Usefulness: Explain what the cluster means
+    if result == 0:
+        st.info("💡 **Insight:** This represents a standard high-value customer.")
+    else:
+        st.warning("⚠️ **Insight:** This behavior matches patterns often flagged for review.")
