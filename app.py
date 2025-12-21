@@ -18,7 +18,7 @@ st.sidebar.subheader("Owner's Information")
 st.sidebar.write("**Name:** Min Thant Hein")
 st.sidebar.write("**ID:** PIUS20230001")
 st.sidebar.write("**Course:** Introduction to Machine Learning")
-st.sidebar.write("**Professor:** Nwe Nwe Htay Win")
+st.sidebar.write("**Professor:** Dr. Nwe Nwe Htay Win")
 
 
 @st.cache_resource
@@ -74,4 +74,5 @@ if st.button("✨ Identify Transaction Cluster", type="primary"):
     except Exception as e:
         st.error(f"Prediction failed: {e}")
         st.caption("Tip: Clear cache in Streamlit Cloud (Manage app → Clear cache) after updating the model.")
+
 
