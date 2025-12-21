@@ -1,10 +1,9 @@
-#fraud_detect2.py
-
 
 # app.py
 import pickle
 import pandas as pd
 import streamlit as st
+from sklearn.pipeline import Pipeline
 
 st.set_page_config(page_title="Fraud Detector", layout="wide")
 
@@ -19,19 +18,45 @@ st.sidebar.write("**Name:** Min Thant Hein")
 st.sidebar.write("**ID:** PIUS20230001")
 
 @st.cache_resource
-def load_model_artifact():
+def load_artifact():
     with open("fraud_detection_model.pkl", "rb") as f:
-        return pickle.load(f)
+        obj = pickle.load(f)
+    return obj
 
-artifact = load_model_artifact()
-model = artifact['model']
-EXPECTED_FEATURES = artifact['expected_features']
+artifact = load_artifact()
 
+# --- Handle both: dict artifact or bare Pipeline ---
+if isinstance(artifact, dict):
+    model = artifact.get('model')
+    EXPECTED_FEATURES = artifact.get('expected_features')
+    # Fallback if older pickle didn't save expected_features
+    if EXPECTED_FEATURES is None:
+        EXPECTED_FEATURES = [
+            'Purchase_Amount', 'Customer_Age', 'Footfall_Count',
+            'Time_Continuous', 'Day_of_Week',
+            'Customer_Loyalty_Tier', 'Payment_Method', 'Product_Category'
+        ]
+else:
+    # artifact is a Pipeline (or similar)
+    model = artifact
+    EXPECTED_FEATURES = [
+        'Purchase_Amount', 'Customer_Age', 'Footfall_Count',
+        'Time_Continuous', 'Day_of_Week',
+        'Customer_Loyalty_Tier', 'Payment_Method', 'Product_Category'
+    ]
+
+# --- Validate we actually loaded a Pipeline ---
+if not isinstance(model, Pipeline):
+    st.error("Loaded object is not a scikit-learn Pipeline. Re-train and pickle correctly.")
+    st.stop()
+
+# --- Header/UI ---
 st.title("🛡️ Luxury Cosmetics Fraud Detection (Unsupervised K-Means)")
-st.write("Enter transaction details to identify the behavioral cluster.\n"
-         "Note: Clustering is unsupervised; labels are not used in training.")
+st.write(
+    "Enter transaction details to identify the behavioral cluster.\n"
+    "Note: Clustering is unsupervised; labels are not used in training."
+)
 
-# UI
 col1, col2, col3 = st.columns(3)
 with col1:
     amt = st.number_input("Purchase Amount ($)", value=500.0, step=10.0)
@@ -44,10 +69,11 @@ with col3:
     cat = st.selectbox("Product Category", ["Skincare", "Fragrance", "Makeup"])
 
 hour = st.slider("Transaction Hour", 0, 23, 14)
-day = st.selectbox("Day of Week", list(range(7)), format_func=lambda x: ["Mon","Tue","Wed","Thu","Fri","Sat","Sun"][x])
+day = st.selectbox("Day of Week", list(range(7)),
+                   format_func=lambda x: ["Mon","Tue","Wed","Thu","Fri","Sat","Sun"][x])
 
 if st.button("✨ Identify Transaction Cluster", type="primary"):
-    # Build input with the exact expected names
+    # --- Build input with exact expected names ---
     input_df = pd.DataFrame([{
         'Purchase_Amount': float(amt),
         'Customer_Age': float(age),
@@ -59,15 +85,33 @@ if st.button("✨ Identify Transaction Cluster", type="primary"):
         'Product_Category': cat
     }], columns=EXPECTED_FEATURES)
 
-    # Predict
+    # --- Sanity check that we’re sending all expected columns ---
+    missing = [c for c in EXPECTED_FEATURES if c not in input_df.columns]
+    if missing:
+        st.error(f"Input is missing columns required by the model: {missing}")
+        st.stop()
+
+    # --- Predict with robust error handling ---
     try:
         result = int(model.predict(input_df)[0])
+
         st.markdown("---")
         st.success(f"### ✅ Transaction Identified: Cluster {result}")
         if result == 0:
             st.info("💡 **Insight:** Typical high-value customer segment.")
         else:
             st.warning("⚠️ **Insight:** Behavior aligns with a segment often flagged for review.")
+
     except Exception as e:
         st.error(f"Prediction failed: {e}")
-        st.caption("Tip: Clear cache in Streamlit Cloud (Manage app → Clear cache) after updating the model.")
+        # Optional diagnostics: show what the preprocessor expects
+        try:
+            pre = model.named_steps.get('preprocess')
+            if pre is not None and hasattr(pre, "transformers_"):
+                num_cols = pre.transformers_[0][2] if len(pre.transformers_) > 0 else []
+                cat_cols = pre.transformers_[1][2] if len(pre.transformers_) > 1 else []
+                st.caption(f"Numeric expected by pipeline: {list(num_cols)}")
+                st.caption(f"Categorical expected by pipeline: {list(cat_cols)}")
+        except Exception:
+            pass
+        st.caption("Tip: Clear cache in Streamlit Cloud (Manage app → Clear cache) after updating the model/pickle.")
