@@ -45,7 +45,7 @@ day = st.selectbox("Day of Week", list(range(7)), format_func=lambda x: ["Mon","
 
 if st.button("✨ Identify Cluster", type="primary"):
     # 1. Using Human Logic Filter 
-    if age > 90 or age < 16:
+    if age > 95 or age < 16:
         st.error("🚨 ALERT: Physically impossible age detected. Manual fraud investigation required.")
     else:
         input_df = pd.DataFrame([{
@@ -67,6 +67,7 @@ if st.button("✨ Identify Cluster", type="primary"):
         res = cluster_map[cluster]
         st.markdown(f"### Result: :{res['color']}[{res['name']} (Cluster {cluster})]")
         st.info(f"💡 **Recommendation:** {res['rec']}")
+
 
 
 
