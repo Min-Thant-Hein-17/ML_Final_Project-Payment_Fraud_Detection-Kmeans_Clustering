@@ -26,7 +26,8 @@ model = artifact['model']
 EXPECTED_FEATURES = artifact['expected_features']
 
 st.title("🛡️ Luxury Cosmetics Fraud Detection")
-st.write("Using Unsupervised K-Means ($K=4$) to detect behavioral anomalies.")
+st.write("Professional Decision Support System for Loss Prevention Teams.")
+
 
 col1, col2, col3 = st.columns(3)
 with col1:
@@ -66,3 +67,4 @@ if st.button("✨ Identify Cluster", type="primary"):
         res = cluster_map[cluster]
         st.markdown(f"### Result: :{res['color']}[{res['name']} (Cluster {cluster})]")
         st.info(f"💡 **Recommendation:** {res['rec']}")
+
