@@ -38,10 +38,10 @@ with st.expander("ℹ️ User Guide: Dos and Don'ts for Fraud Detection"):
 
     with col_dont:
         st.error("### ❌ Don'ts")
-        st.write("- DON’T: Trust "Too Good to be True" Prices (Very Cheap Prices)")
-        st.write("- DON’T: Buy from Unverified Third-Party Marketplaces")
-        st.write("- DON’T: Ignore the Smell and Texture (Eg.cheaper/fake smell chemcial/waxy")
-        st.write("- DON’T: Shop on Public Wi-Fi")
+        st.write(" - DON’T: Trust "Too Good to be True" Prices (Very Cheap Prices)")
+        st.write(" - DON’T: Buy from Unverified Third-Party Marketplaces")
+        st.write(" - DON’T: Ignore the Smell and Texture (Eg.cheaper/fake smell chemcial/waxy")
+        st.write(" - DON’T: Shop on Public Wi-Fi")
 
 st.markdown("---")
 
@@ -99,6 +99,7 @@ if st.button("✨ Identify Cluster", type="primary"):
         st.markdown(f"### Result: :{res['color']}[{res['name']} (Cluster {cluster})]")
         st.write(f"**Calculated Risk Level:** {res['risk']}")
         st.info(f"  {res['rec']}")
+
 
 
 
