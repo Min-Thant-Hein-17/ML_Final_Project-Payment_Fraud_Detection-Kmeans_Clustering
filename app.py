@@ -66,7 +66,8 @@ if st.button("✨ Identify Cluster", type="primary"):
         
         res = cluster_map[cluster]
         st.markdown(f"### Result: :{res['color']}[{res['name']} (Cluster {cluster})]")
-        st.info(f"💡 **Recommendation:** {res['rec']}")
+        st.info(f" **Recommendation:** {res['rec']}")
+
 
 
 
