@@ -58,15 +58,16 @@ if st.button("✨ Identify Cluster", type="primary"):
         
         # 2. Persona Mapping whether it is normal, fraud or suspicious!
         cluster_map = {
-            0: {"name": "Standard Buyer", "color": "blue", "rec": "Auto-approve."},
-            1: {"name": "High-Value Anomaly", "color": "red", "rec": "Block & Verify ID."},
-            2: {"name": "Night-time Suspicious", "color": "orange", "rec": "Manual Review Required."},
-            3: {"name": "Verified VIP", "color": "green", "rec": "Priority Shipping."}
+            0: {"name": "Standard Buyer", "color": "blue", "rec": "✅ **Action: Auto-Approve.** This profile fits typical shopping patterns. No further action needed.", "risk": "Low"},
+            1: {"name": "High-Value Anomaly", "color": "red", "rec": "🚨 **Action: IMMEDIATE HOLD.** Large amount outlier. Contact customer via phone to verify identity before shipping.", "risk": "Extremely High"},
+            2: {"name": "Night-time Suspicious", "color": "orange", "rec": "⚠️ **Action: Manual Review.** Transaction occurred at an unusual hour. Cross-reference IP address with shipping address.", "risk": "High"},
+            3: {"name": "Verified VIP", "color": "green", "rec": "💎 **Action: Priority Handling.** Trusted loyalty member. Approve and apply complimentary express shipping.", "risk": "Safe"}
         }
         
         res = cluster_map[cluster]
         st.markdown(f"### Result: :{res['color']}[{res['name']} (Cluster {cluster})]")
         st.info(f"💡 **Recommendation:** {res['rec']}")
+
 
 
 
