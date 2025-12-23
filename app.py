@@ -43,6 +43,7 @@ EXPECTED_FEATURES = artifact['expected_features']
 
 st.title("🛡️ Luxury Cosmetics Fraud Detection")
 st.write("Professional Decision Support System for Loss Prevention Teams.")
+st.markdown("---")
 
 
 col1, col2, col3 = st.columns(3)
@@ -84,6 +85,7 @@ if st.button("✨ Identify Cluster", type="primary"):
         st.markdown(f"### Result: :{res['color']}[{res['name']} (Cluster {cluster})]")
         st.write(f"**Calculated Risk Level:** {res['risk']}")
         st.info(f"  {res['rec']}")
+
 
 
 
