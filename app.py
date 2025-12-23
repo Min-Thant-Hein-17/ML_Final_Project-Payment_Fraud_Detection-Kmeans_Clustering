@@ -19,7 +19,7 @@ st.sidebar.write("**Professor:** Dr. Nwe Nwe Htay Win")
 st.sidebar.markdown("---")
 
 # Adding Reliable Links in the Sidebar
-with st.expander("🔗 Reliable Websites and Resources"):
+with st.expander("🔗 Reliable Websites and Resources(Security Practices)"):
     st.write("🔗 Reliable Websites and Resources")
 # Using st.sidebar.markdown to include the link
     st.write("Check **Cybersecurity Best Practices** at [Cisa.gov](https://www.cisa.gov/topics/cybersecurity-best-practices).")
@@ -97,6 +97,7 @@ if st.button("✨ Identify Cluster", type="primary"):
         st.markdown(f"### Result: :{res['color']}[{res['name']} (Cluster {cluster})]")
         st.write(f"**Calculated Risk Level:** {res['risk']}")
         st.info(f"  {res['rec']}")
+
 
 
 
