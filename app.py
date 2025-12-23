@@ -44,7 +44,7 @@ hour = st.slider("Transaction Hour", 0, 23, 14)
 day = st.selectbox("Day of Week", list(range(7)), format_func=lambda x: ["Mon","Tue","Wed","Thu","Fri","Sat","Sun"][x])
 
 if st.button("✨ Identify Cluster", type="primary"):
-    # 1. Human Logic Filter (Mastery Point)
+    # 1. Using Human Logic Filter 
     if age > 100 or age < 12:
         st.error("🚨 ALERT: Physically impossible age detected. Manual fraud investigation required.")
     else:
@@ -56,7 +56,7 @@ if st.button("✨ Identify Cluster", type="primary"):
 
         cluster = int(model.predict(input_df)[0])
         
-        # 2. Persona Mapping
+        # 2. Persona Mapping whether it is normal, fraud or suspicious!
         cluster_map = {
             0: {"name": "Standard Buyer", "color": "blue", "rec": "Auto-approve."},
             1: {"name": "High-Value Anomaly", "color": "red", "rec": "Block & Verify ID."},
@@ -67,4 +67,5 @@ if st.button("✨ Identify Cluster", type="primary"):
         res = cluster_map[cluster]
         st.markdown(f"### Result: :{res['color']}[{res['name']} (Cluster {cluster})]")
         st.info(f"💡 **Recommendation:** {res['rec']}")
+
 
