@@ -12,6 +12,7 @@ st.sidebar.markdown("---")
 st.sidebar.subheader("Owner's Information")
 st.sidebar.write("**Name:** Min Thant Hein")
 st.sidebar.write("**ID:** PIUS20230001")
+st.sidebar.write(f"**Contact Email:** minthanthein@parami.edu.mm ")
 st.sidebar.write("**Course:** Introduction to Machine Learning")
 st.sidebar.write("**Professor:** Dr. Nwe Nwe Htay Win")
 st.sidebar.markdown("---")
@@ -85,6 +86,7 @@ if st.button("✨ Identify Cluster", type="primary"):
         st.markdown(f"### Result: :{res['color']}[{res['name']} (Cluster {cluster})]")
         st.write(f"**Calculated Risk Level:** {res['risk']}")
         st.info(f"  {res['rec']}")
+
 
 
 
