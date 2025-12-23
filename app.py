@@ -33,14 +33,15 @@ with st.expander("ℹ️ User Guide: Dos and Don'ts for Fraud Detection"):
         st.success("### ✅ Dos")
         st.write("- DO: Purchase from Authorized Retailers")
         st.write("- DO: Check the Batch Code")
-        st.write("- DO Inspect the Packaging Quality")
+        st.write("- DO: Inspect the Packaging Quality")
         st.write("- DO: Verify/Secure Payment Methods")
 
     with col_dont:
         st.error("### ❌ Don'ts")
-        st.write("- **Ignore Age Alerts:** Never approve transactions with impossible ages.")
-        st.write("- **Blindly Trust 0:** Even 'Standard' clusters need periodic audit.")
-        st.write("- **Input Raw Data:** Ensure currency is converted to USD before entry.")
+        st.write("- DON’T: Trust "Too Good to be True" Prices (Very Cheap Prices)")
+        st.write("- DON’T: Buy from Unverified Third-Party Marketplaces")
+        st.write("- DON’T: Ignore the Smell and Texture (Eg.cheaper/fake smell chemcial/waxy")
+        st.write("- DON’T: Shop on Public Wi-Fi")
 
 st.markdown("---")
 
@@ -98,6 +99,7 @@ if st.button("✨ Identify Cluster", type="primary"):
         st.markdown(f"### Result: :{res['color']}[{res['name']} (Cluster {cluster})]")
         st.write(f"**Calculated Risk Level:** {res['risk']}")
         st.info(f"  {res['rec']}")
+
 
 
 
