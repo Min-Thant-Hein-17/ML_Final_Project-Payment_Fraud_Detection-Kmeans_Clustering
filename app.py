@@ -19,12 +19,12 @@ st.sidebar.markdown("---")
 
 # Adding Reliable Links in the Sidebar
 with st.expander("🔗 Reliable Websites and Resources"):
-    st.sidebar.subheader("🔗 Reliable Websites and Resources")
+    st.write.subheader("🔗 Reliable Websites and Resources")
 # Using st.sidebar.markdown to include the link
-    st.sidebar.markdown("Check **Cybersecurity Best Practices** at [Cisa.gov](https://www.cisa.gov/topics/cybersecurity-best-practices).")
-    st.sidebar.markdown("**Latest Industry News** from [University of Sandiego](https://onlinedegrees.sandiego.edu/top-cyber-security-blogs-websites/).")
+    st.write.markdown("Check **Cybersecurity Best Practices** at [Cisa.gov](https://www.cisa.gov/topics/cybersecurity-best-practices).")
+    st.write.markdown("**Latest Industry News** from [University of Sandiego](https://onlinedegrees.sandiego.edu/top-cyber-security-blogs-websites/).")
 
-    st.sidebar.markdown("---")
+    st.write.markdown("---")
 
 
 with st.expander("ℹ️ User Guide: Dos and Don'ts for Fraud Detection"):
@@ -96,6 +96,7 @@ if st.button("✨ Identify Cluster", type="primary"):
         st.markdown(f"### Result: :{res['color']}[{res['name']} (Cluster {cluster})]")
         st.write(f"**Calculated Risk Level:** {res['risk']}")
         st.info(f"  {res['rec']}")
+
 
 
 
