@@ -31,9 +31,11 @@ with st.expander("ℹ️ User Guide: Dos and Don'ts for Fraud Detection"):
     col_do, col_dont = st.columns(2)
     with col_do:
         st.success("### ✅ Dos")
-        st.write("- **Check High-Value Clusters:** Prioritize manual reviews for Cluster 1.")
-        st.write("- **Verify Night Transactions:** Use the slider to check risk at late hours.")
-        st.write("- **Validate VIPs:** Reward loyal customers in Cluster 3 with fast-track shipping.")
+        st.write("DO: Purchase from Authorized Retailers")
+        st.write("DO: Check the Batch Code")
+        st.write("DO Inspect the Packaging Quality")
+        st.write("DO: Verify/Secure Payment Methods")
+
     with col_dont:
         st.error("### ❌ Don'ts")
         st.write("- **Ignore Age Alerts:** Never approve transactions with impossible ages.")
@@ -96,6 +98,7 @@ if st.button("✨ Identify Cluster", type="primary"):
         st.markdown(f"### Result: :{res['color']}[{res['name']} (Cluster {cluster})]")
         st.write(f"**Calculated Risk Level:** {res['risk']}")
         st.info(f"  {res['rec']}")
+
 
 
 
