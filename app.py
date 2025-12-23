@@ -66,7 +66,9 @@ if st.button("✨ Identify Cluster", type="primary"):
         
         res = cluster_map[cluster]
         st.markdown(f"### Result: :{res['color']}[{res['name']} (Cluster {cluster})]")
+        st.write(f"**Calculated Risk Level:** {res['risk']}")
         st.info(f"  {res['rec']}")
+
 
 
 
