@@ -6,7 +6,7 @@ import streamlit as st
 st.set_page_config(page_title="Fraud Sentinel", layout="wide")
 
 st.sidebar.title("🛡️ Project Alpha")
-st.sidebar.subtitle("Anti-Fraud Units")
+st.sidebar.subheader("Anti-Fraud Units")
 st.sidebar.image("https://talloiresnetwork.tufts.edu/wp-content/uploads//Parami-University-1.png", use_container_width=True)
 
 st.sidebar.markdown("---")
@@ -97,6 +97,7 @@ if st.button("✨ Identify Cluster", type="primary"):
         st.markdown(f"### Result: :{res['color']}[{res['name']} (Cluster {cluster})]")
         st.write(f"**Calculated Risk Level:** {res['risk']}")
         st.info(f"  {res['rec']}")
+
 
 
 
