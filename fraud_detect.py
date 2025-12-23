@@ -12,20 +12,10 @@ from imblearn.over_sampling import SMOTE
 # --- 1) Load dataset ---
 fd = pd.read_csv("dataset/luxury_cosmetics_fraud_analysis_2025.csv")
 
-# --- 2) Feature engineering & IQR Outlier Handling ---
+# --- 2) Feature engineering  ---
 time_objs = pd.to_datetime(fd['Transaction_Time'], format='%H:%M:%S')
 fd['Time_Continuous'] = time_objs.dt.hour + time_objs.dt.minute / 60.0
 fd['Day_of_Week'] = pd.to_datetime(fd['Transaction_Date']).dt.dayofweek
-
-def cap_outliers_iqr(df, column):
-    Q1 = df[column].quantile(0.25)
-    Q3 = df[column].quantile(0.75)
-    IQR = Q3 - Q1
-    df[column] = np.clip(df[column], Q1 - 1.5 * IQR, Q3 + 1.5 * IQR)
-    return df
-
-fd = cap_outliers_iqr(fd, 'Purchase_Amount')
-fd = cap_outliers_iqr(fd, 'Customer_Age')
 
 # --- 3) Preprocessing Pipeline ---
 EXPECTED_FEATURES = [
@@ -59,3 +49,4 @@ artifact = {'model': model_pipeline, 'expected_features': EXPECTED_FEATURES}
 with open('fraud_detection_Final_model.pkl', 'wb') as f:
     pickle.dump(artifact, f)
 print("✅ Mastery Model Saved!")
+
