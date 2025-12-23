@@ -51,7 +51,7 @@ artifact = load_model()
 model = artifact['model']
 EXPECTED_FEATURES = artifact['expected_features']
 
-st.title("🛡️ Luxury Cosmetics Fraud Detection")
+st.title("🛡️ Luxury Cosmetics & Payment Transaction Fraud Detection")
 st.write("Professional Decision Support System for Loss Prevention Teams.")
 st.markdown("---")
 
@@ -95,6 +95,7 @@ if st.button("✨ Identify Cluster", type="primary"):
         st.markdown(f"### Result: :{res['color']}[{res['name']} (Cluster {cluster})]")
         st.write(f"**Calculated Risk Level:** {res['risk']}")
         st.info(f"  {res['rec']}")
+
 
 
 
