@@ -48,5 +48,6 @@ artifact = {'model': model_pipeline, 'expected_features': EXPECTED_FEATURES}
 
 with open('fraud_detection_Final_model.pkl', 'wb') as f:
     pickle.dump(artifact, f)
-print("✅ Mastery Model Saved!")
+print("Model is saved!")
+
 
