@@ -6,7 +6,7 @@ Presentation Slides: https://canva.link/ytddgqkj1w0co4e
 
 # 🚀 Live Demo
 
-Check out the interactive web application here: https://mggse7pbqw2krjd8bkcebm.streamlit.app/
+Check out the interactive web application here: https://fraud-detect17.streamlit.app/
 
 # 📊 Project Overview
 
